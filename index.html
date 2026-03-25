@@ -344,43 +344,67 @@ function makeWall(x, rotY, zOffset) {
 makeWall(-14, Math.PI / 2, -46);
 makeWall( 14, -Math.PI / 2, -46);
 
+// ── FRAME SIZE: calculate exact 3D units matching iframe pixels ──
+function calcFrameInner(pxW, pxH, distZ) {
+  const fovRad = (60 * Math.PI) / 180;
+  const screenH = window.innerHeight;
+  const screenW = window.innerWidth;
+  const visH = 2 * Math.tan(fovRad / 2) * distZ;
+  const visW = visH * (screenW / screenH);
+  return {
+    w: (pxW / screenW) * visW,
+    h: (pxH / screenH) * visH,
+  };
+}
+
 // ── GOLD FRAME BUILDER ──
-function buildGoldFrame(pos) {
+function buildGoldFrame(pos, iframeH = 470) {
   const group = new THREE.Group();
   group.position.copy(pos);
 
+  // Inner opening = exact iframe size projected at camera distance 5
+  const { w: innerW, h: innerH } = calcFrameInner(350, iframeH, 5);
+  const frameThickness = 0.55;
+
+  const outerW = innerW + frameThickness * 2;
+  const outerH = innerH + frameThickness * 2;
+
   // Gold material layers — outer to inner, each slightly recessed
   const goldLayers = [
-    { w: 4.6, h: 6.0, d: 0.22, color: 0xb8860b, roughness: 0.25, metalness: 0.95, z: 0.00 }, // outermost dark gold
-    { w: 4.3, h: 5.7, d: 0.20, color: 0xd4a017, roughness: 0.20, metalness: 0.98, z: 0.06 }, // bright gold bevel
-    { w: 4.1, h: 5.5, d: 0.18, color: 0xc8961a, roughness: 0.30, metalness: 0.92, z: 0.10 }, // mid shadow
-    { w: 3.9, h: 5.3, d: 0.16, color: 0xe8c030, roughness: 0.15, metalness: 1.00, z: 0.13 }, // highlight ring
-    { w: 3.75,h: 5.15,d: 0.14, color: 0xa07010, roughness: 0.40, metalness: 0.85, z: 0.15 }, // inner shadow
+    { shrink: 0.00, d: 0.22, color: 0xb8860b, roughness: 0.25, metalness: 0.95, z: 0.00 },
+    { shrink: 0.15, d: 0.20, color: 0xd4a017, roughness: 0.20, metalness: 0.98, z: 0.06 },
+    { shrink: 0.25, d: 0.18, color: 0xc8961a, roughness: 0.30, metalness: 0.92, z: 0.10 },
+    { shrink: 0.35, d: 0.16, color: 0xe8c030, roughness: 0.15, metalness: 1.00, z: 0.13 },
+    { shrink: 0.42, d: 0.14, color: 0xa07010, roughness: 0.40, metalness: 0.85, z: 0.15 },
   ];
 
-  goldLayers.forEach(({ w, h, d, color, roughness, metalness, z }) => {
+  goldLayers.forEach(({ shrink, d, color, roughness, metalness, z }) => {
     const mat = new THREE.MeshStandardMaterial({ color, roughness, metalness, side: THREE.FrontSide });
+    const w = outerW - shrink * 2;
+    const h = outerH - shrink * 2;
+    const iw = innerW + shrink * 2; // inner opening grows as frame shrinks
+    const ih = innerH + shrink * 2;
+    const barW = (w - iw) / 2;
+    const barH = (h - ih) / 2;
 
     // Top bar
-    const topGeo = new THREE.BoxGeometry(w, (h - 4.8) / 2 + 0.05, d);
-    const top = new THREE.Mesh(topGeo, mat);
-    top.position.set(0, h / 2 - (h - 4.8) / 4 - 0.025, z);
+    const top = new THREE.Mesh(new THREE.BoxGeometry(w, barH, d), mat);
+    top.position.set(0, ih / 2 + barH / 2, z);
     group.add(top);
 
     // Bottom bar
     const bot = top.clone();
-    bot.position.set(0, -(h / 2 - (h - 4.8) / 4 - 0.025), z);
+    bot.position.set(0, -(ih / 2 + barH / 2), z);
     group.add(bot);
 
     // Left bar
-    const sideGeo = new THREE.BoxGeometry((w - 3.6) / 2 + 0.05, 4.8, d);
-    const left = new THREE.Mesh(sideGeo, mat);
-    left.position.set(-(w / 2 - (w - 3.6) / 4 - 0.025), 0, z);
+    const left = new THREE.Mesh(new THREE.BoxGeometry(barW, ih, d), mat);
+    left.position.set(-(iw / 2 + barW / 2), 0, z);
     group.add(left);
 
     // Right bar
     const right = left.clone();
-    right.position.set(w / 2 - (w - 3.6) / 4 - 0.025, 0, z);
+    right.position.set(iw / 2 + barW / 2, 0, z);
     group.add(right);
   });
 
@@ -405,9 +429,10 @@ function buildGoldFrame(pos) {
   group.add(marker);
 
   scene.add(group);
+  return group;
 }
 
-POSITIONS.forEach(pos => buildGoldFrame(pos));
+const frameGroups = RELEASES.map((rel, i) => buildGoldFrame(POSITIONS[i], rel.h));
 
 // ── PARTICLES (dust/spores) ──
 const particleCount = 300;
@@ -533,6 +558,17 @@ function animate() {
   particleGeo.attributes.position.needsUpdate = true;
 
   scene.fog.density = 0.022 + Math.sin(t * 0.5) * 0.002;
+
+  // Billboard: rotate each frame to face camera (Y + X axis)
+  frameGroups.forEach(group => {
+    const dx = camera.position.x - group.position.x;
+    const dy = camera.position.y - group.position.y;
+    const dz = camera.position.z - group.position.z;
+    group.rotation.y = Math.atan2(dx, dz);
+    const distXZ = Math.sqrt(dx * dx + dz * dz);
+    group.rotation.x = -Math.atan2(dy, distXZ);
+  });
+
   renderer.render(scene, camera);
 }
 animate();
