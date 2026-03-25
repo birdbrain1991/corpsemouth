@@ -32,6 +32,11 @@ body {
   position: fixed; inset: 0;
   z-index: 0;
 }
+#frame-overlay {
+  position: fixed; inset: 0;
+  z-index: 25;
+  pointer-events: none;
+}
 
 /* ── SCANLINES ── */
 #scanlines {
@@ -111,7 +116,7 @@ body {
 #iframe-wrapper {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  z-index: 30; pointer-events: none;
+  z-index: 20; pointer-events: none;
 }
 #iframe-container {
   position: relative;
@@ -119,27 +124,14 @@ body {
   transform: scale(0.92);
   transition: opacity 0.5s ease, transform 0.5s cubic-bezier(.4,0,.2,1);
   pointer-events: none;
-  border: 1px solid rgba(139,0,0,0.5);
-  box-shadow:
-    0 0 40px rgba(139,0,0,0.4),
-    0 0 80px rgba(139,0,0,0.15),
-    inset 0 0 30px rgba(0,0,0,0.5);
+  /* Clip to inner opening of gold frame — frame bars are ~42px each side */
+  clip-path: inset(0px 0px 0px 0px);
 }
 #iframe-container.visible {
   opacity: 1;
   transform: scale(1);
   pointer-events: all;
 }
-#iframe-container::before,
-#iframe-container::after {
-  content: '';
-  position: absolute;
-  width: 20px; height: 20px;
-  border-color: var(--blood); border-style: solid;
-  z-index: 1; pointer-events: none;
-}
-#iframe-container::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
-#iframe-container::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
 
 #active-iframe {
   display: block;
@@ -218,6 +210,7 @@ body {
 </div>
 
 <canvas id="three-canvas"></canvas>
+<canvas id="frame-overlay"></canvas>
 <div id="scanlines"></div>
 <div id="vignette"></div>
 
@@ -297,6 +290,15 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true 
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x0d0505, 1);
+
+// Overlay renderer — renders gold frames ABOVE the iframe
+const overlayCanvas = document.getElementById('frame-overlay');
+const overlayRenderer = new THREE.WebGLRenderer({ canvas: overlayCanvas, antialias: true, alpha: true });
+overlayRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+overlayRenderer.setSize(window.innerWidth, window.innerHeight);
+overlayRenderer.setClearColor(0x000000, 0);
+
+const overlayScene = new THREE.Scene();
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x1a0000, 0.022);
@@ -418,11 +420,20 @@ function buildGoldFrame(pos) {
   group.add(marker);
 
   scene.add(group);
+
+  // Also add a clone to the overlay scene so it renders above the iframe
+  const overlayGroup = group.clone(true);
+  overlayScene.add(overlayGroup);
 }
 
 POSITIONS.forEach(pos => buildGoldFrame(pos));
 
-// ── PARTICLES (dust/spores) ──
+// ── OVERLAY LIGHTS (mirror main scene) ──
+const overlayAmbient = new THREE.AmbientLight(0x1a0800, 1.2);
+overlayScene.add(overlayAmbient);
+const overlayWarm = new THREE.DirectionalLight(0xffd080, 0.8);
+overlayWarm.position.set(0, 10, 5);
+overlayScene.add(overlayWarm);
 const particleCount = 300;
 const particleGeo = new THREE.BufferGeometry();
 const pPos = new Float32Array(particleCount * 3);
@@ -523,6 +534,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  overlayRenderer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // ── RENDER LOOP ──
@@ -551,6 +563,7 @@ function animate() {
   scene.fog.density = 0.022 + Math.sin(t * 0.5) * 0.002;
 
   renderer.render(scene, camera);
+  overlayRenderer.render(overlayScene, camera);
 }
 animate();
 
