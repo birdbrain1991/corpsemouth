@@ -248,18 +248,18 @@ body {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const RELEASES = [
-  { title: "OF A MAD GOD",           src: "https://bandcamp.com/EmbeddedPlayer/track=1748462688/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
-  { title: "OBSESSION EP",           src: "https://bandcamp.com/EmbeddedPlayer/album=2957680617/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
-  { title: "120 DAYS OF SODOM",      src: "https://bandcamp.com/EmbeddedPlayer/album=3060165123/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
-  { title: "ANGELMAKER",             src: "https://bandcamp.com/EmbeddedPlayer/track=2996466389/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
-  { title: "NUCLEAR WINTER // REGRESSION", src: "https://bandcamp.com/EmbeddedPlayer/track=2272334278/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
-  { title: "HATE",                   src: "https://bandcamp.com/EmbeddedPlayer/track=1230165177/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
-  { title: "AND OUR BONES SHALL ROT EP", src: "https://bandcamp.com/EmbeddedPlayer/album=2773660087/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
-  { title: "BEYOND SILENT HILLS EP", src: "https://bandcamp.com/EmbeddedPlayer/album=758937116/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
-  { title: "SLAUGHTERHOUSE BLUES",   src: "https://bandcamp.com/EmbeddedPlayer/track=722976963/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
-  { title: "PIG SUIT",               src: "https://bandcamp.com/EmbeddedPlayer/track=2374666027/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
-  { title: "F25.9",                  src: "https://bandcamp.com/EmbeddedPlayer/album=2955075972/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
-  { title: "MISANTHROPOCENE EP",     src: "https://bandcamp.com/EmbeddedPlayer/album=2508178849/size=large/bgcol=1a0000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
+  { title: "OF A MAD GOD",           src: "https://bandcamp.com/EmbeddedPlayer/track=1748462688/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
+  { title: "OBSESSION EP",           src: "https://bandcamp.com/EmbeddedPlayer/album=2957680617/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
+  { title: "120 DAYS OF SODOM",      src: "https://bandcamp.com/EmbeddedPlayer/album=3060165123/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
+  { title: "ANGELMAKER",             src: "https://bandcamp.com/EmbeddedPlayer/track=2996466389/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
+  { title: "NUCLEAR WINTER // REGRESSION", src: "https://bandcamp.com/EmbeddedPlayer/track=2272334278/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
+  { title: "HATE",                   src: "https://bandcamp.com/EmbeddedPlayer/track=1230165177/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
+  { title: "AND OUR BONES SHALL ROT EP", src: "https://bandcamp.com/EmbeddedPlayer/album=2773660087/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
+  { title: "BEYOND SILENT HILLS EP", src: "https://bandcamp.com/EmbeddedPlayer/album=758937116/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
+  { title: "SLAUGHTERHOUSE BLUES",   src: "https://bandcamp.com/EmbeddedPlayer/track=722976963/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
+  { title: "PIG SUIT",               src: "https://bandcamp.com/EmbeddedPlayer/track=2374666027/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 442 },
+  { title: "F25.9",                  src: "https://bandcamp.com/EmbeddedPlayer/album=2955075972/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
+  { title: "MISANTHROPOCENE EP",     src: "https://bandcamp.com/EmbeddedPlayer/album=2508178849/size=large/bgcol=000000/linkcol=c0392b/tracklist=false/transparent=true/", h: 470 },
 ];
 
 // ── 3D POSITIONS (Ausstellungshalle: verteilt im Raum, aber geordnet) ──
@@ -277,6 +277,9 @@ const POSITIONS = [
   new THREE.Vector3(-9,  0.5, -84),
   new THREE.Vector3( 3,  1,   -92),
 ];
+
+// ── DOOR POSITION (end of hall) ──
+const DOOR_POS = new THREE.Vector3(0, 0, -102);
 
 // ── THREE SETUP ──
 const canvas = document.getElementById('three-canvas');
@@ -434,6 +437,73 @@ function buildGoldFrame(pos, iframeH = 470) {
 
 const frameGroups = RELEASES.map((rel, i) => buildGoldFrame(POSITIONS[i], rel.h));
 
+// ── RED DOOR ──
+const doorGroup = new THREE.Group();
+doorGroup.position.copy(DOOR_POS);
+
+// Door frame (surround)
+const doorFrameMat = new THREE.MeshStandardMaterial({ color: 0x1a0000, roughness: 0.8, metalness: 0.2 });
+const doorFrameTop = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.3, 0.15), doorFrameMat);
+doorFrameTop.position.set(0, 2.15, 0);
+doorGroup.add(doorFrameTop);
+const doorFrameL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.0, 0.15), doorFrameMat);
+doorFrameL.position.set(-1.45, 0, 0);
+doorGroup.add(doorFrameL);
+const doorFrameR = doorFrameL.clone();
+doorFrameR.position.set(1.45, 0, 0);
+doorGroup.add(doorFrameR);
+
+// Door panel
+const doorMat = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.4, metalness: 0.5, emissive: 0x3a0000, emissiveIntensity: 0.4 });
+const doorPanel = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.9, 0.1), doorMat);
+doorPanel.position.set(0, 0, 0.02);
+doorGroup.add(doorPanel);
+
+// Door panels (decorative recessed rectangles)
+const recessMat = new THREE.MeshStandardMaterial({ color: 0x6b0000, roughness: 0.5, metalness: 0.3 });
+[[-0.5, 0.8], [0.5, 0.8], [-0.5, -0.7], [0.5, -0.7]].forEach(([x, y]) => {
+  const r = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.3, 0.04), recessMat);
+  r.position.set(x, y, 0.08);
+  doorGroup.add(r);
+});
+
+// Door handle
+const handleMat = new THREE.MeshStandardMaterial({ color: 0xd4a017, roughness: 0.2, metalness: 1.0 });
+const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 8), handleMat);
+handle.rotation.z = Math.PI / 2;
+handle.position.set(0.9, 0, 0.12);
+doorGroup.add(handle);
+
+// Glow light in doorway
+const doorLight = new THREE.PointLight(0xff2200, 2.5, 15);
+doorLight.position.set(0, 0, 1);
+doorGroup.add(doorLight);
+
+// Label above door
+scene.add(doorGroup);
+
+// Raycaster for door click
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+canvas.addEventListener('click', e => {
+  mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObject(doorPanel);
+  if (hits.length > 0) {
+    window.location.href = 'https://birdbrain1991.github.io/wildgod/';
+  }
+});
+
+// Cursor change on hover
+canvas.addEventListener('mousemove', e => {
+  mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObject(doorPanel);
+  canvas.style.cursor = hits.length > 0 ? 'pointer' : 'crosshair';
+});
+
 // ── PARTICLES (dust/spores) ──
 const particleCount = 300;
 const particleGeo = new THREE.BufferGeometry();
@@ -513,11 +583,50 @@ function showRelease(index) {
   iframeContainer.classList.add('visible');
 }
 
+function flyToDoor(onDone) {
+  if (isAnimating) return;
+  isAnimating = true;
+  iframeContainer.classList.remove('visible');
+
+  const target = DOOR_POS.clone().add(new THREE.Vector3(0, 0.4, 5));
+  const startPos = camera.position.clone();
+  const startLook = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z - 1);
+  const endLook = DOOR_POS.clone();
+  const duration = 1400;
+  const startTime = performance.now();
+
+  function tick(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    camera.position.lerpVectors(startPos, target, e);
+    const look = new THREE.Vector3();
+    look.lerpVectors(startLook, endLook, e);
+    camera.lookAt(look);
+    if (t < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      camera.lookAt(DOOR_POS);
+      isAnimating = false;
+      if (onDone) onDone();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// Total stops: 12 releases + 1 door = 13
+const TOTAL_STOPS = RELEASES.length + 1;
+const DOOR_INDEX = RELEASES.length; // index 12
+
 function navigate(dir) {
   if (isAnimating) return;
-  const next = (current + dir + RELEASES.length) % RELEASES.length;
+  const next = (current + dir + TOTAL_STOPS) % TOTAL_STOPS;
   current = next;
-  flyTo(current, () => showRelease(current));
+  if (current === DOOR_INDEX) {
+    flyToDoor();
+  } else {
+    flyTo(current, () => showRelease(current));
+  }
 }
 
 // ── BUTTONS ──
@@ -544,7 +653,7 @@ function animate() {
   const t = clock.getElapsedTime();
 
   if (!isAnimating && !iframeContainer.classList.contains('visible')) {
-    const target = POSITIONS[current];
+    const target = current === DOOR_INDEX ? DOOR_POS : POSITIONS[current];
     const base = target.clone().add(CAM_OFFSET);
     camera.position.x = base.x + Math.sin(t * 0.3) * 0.08;
     camera.position.y = base.y + Math.sin(t * 0.2) * 0.05;
@@ -568,6 +677,12 @@ function animate() {
     const distXZ = Math.sqrt(dx * dx + dz * dz);
     group.rotation.x = -Math.atan2(dy, distXZ);
   });
+
+  // Door always faces camera
+  doorGroup.rotation.y = Math.atan2(
+    camera.position.x - DOOR_POS.x,
+    camera.position.z - DOOR_POS.z
+  );
 
   renderer.render(scene, camera);
 }
