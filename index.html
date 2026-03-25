@@ -83,72 +83,29 @@ body {
   background: rgba(212,196,176,0.05);
 }
 
-/* ── COUNTER ── */
-#counter {
-  position: fixed; bottom: 80px; left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  font-size: 11px; letter-spacing: 4px;
-  color: var(--ember); opacity: 0.8;
-  text-align: center;
-}
-#counter-num {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 28px; letter-spacing: 6px;
-  color: var(--bone); display: block;
-  text-shadow: 0 0 18px rgba(139,0,0,0.9);
-}
-#counter-title {
-  display: block; margin-top: 3px;
-  font-size: 10px; letter-spacing: 3px;
-  color: rgba(212,196,176,0.5);
-  max-width: 240px; text-align: center;
-  text-transform: uppercase;
-}
-
 /* ── HUD NAVIGATION ── */
-#hud {
-  position: fixed; bottom: 24px; left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  display: flex; align-items: center; gap: 10px;
-}
 .hud-btn {
+  position: fixed; top: 50%; z-index: 50;
+  transform: translateY(-50%);
   width: 44px; height: 44px;
   border: 1px solid rgba(139,0,0,0.6);
   background: rgba(13,5,5,0.8);
   color: var(--ember);
-  font-size: 16px;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s ease;
-  position: relative;
   clip-path: polygon(10% 0%, 90% 0%, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0% 90%, 0% 10%);
 }
+#btn-prev { left: 24px; }
+#btn-next { right: 24px; }
 .hud-btn:hover {
   border-color: var(--blood);
   background: rgba(139,0,0,0.25);
   color: var(--bone);
   box-shadow: 0 0 18px rgba(139,0,0,0.5), inset 0 0 12px rgba(139,0,0,0.15);
 }
-.hud-btn:active { transform: scale(0.93); }
+.hud-btn:active { transform: translateY(-50%) scale(0.93); }
 .hud-btn svg { width: 18px; height: 18px; fill: currentColor; }
-
-#hud-dots {
-  display: flex; gap: 6px; align-items: center;
-  padding: 0 8px;
-}
-.hud-dot {
-  width: 5px; height: 5px;
-  background: rgba(139,0,0,0.35);
-  transition: all 0.3s ease;
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-}
-.hud-dot.active {
-  background: var(--ember);
-  box-shadow: 0 0 8px rgba(192,57,43,0.8);
-  transform: scale(1.5);
-}
 
 /* ── IFRAME CONTAINER (DOM overlay) ── */
 #iframe-wrapper {
@@ -294,20 +251,12 @@ body {
   </div>
 </div>
 
-<div id="counter">
-  <span id="counter-num">01 / 12</span>
-  <span id="counter-title">Loading...</span>
-</div>
-
-<nav id="hud">
-  <button class="hud-btn" id="btn-prev" title="Vorheriger">
-    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
-  </button>
-  <div id="hud-dots"></div>
-  <button class="hud-btn" id="btn-next" title="Nächster">
-    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-  </button>
-</nav>
+<button class="hud-btn" id="btn-prev">
+  <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+</button>
+<button class="hud-btn" id="btn-next">
+  <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -356,12 +305,17 @@ const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerH
 camera.position.set(0, 0, 4);
 
 // ── LIGHTS ──
-const ambientLight = new THREE.AmbientLight(0x330000, 0.8);
+const ambientLight = new THREE.AmbientLight(0x1a0800, 1.2);
 scene.add(ambientLight);
 
-const bloodLight1 = new THREE.PointLight(0x8b0000, 3, 30);
+const bloodLight1 = new THREE.PointLight(0x8b0000, 2, 30);
 bloodLight1.position.set(0, 5, 0);
 scene.add(bloodLight1);
+
+// Warm overhead strip to make gold pop
+const warmStrip = new THREE.DirectionalLight(0xffd080, 0.8);
+warmStrip.position.set(0, 10, 5);
+scene.add(warmStrip);
 
 // ── FLOOR ──
 const floorGeo = new THREE.PlaneGeometry(40, 200);
@@ -403,28 +357,70 @@ function makeWall(x, rotY, zOffset) {
 makeWall(-14, Math.PI / 2, -46);
 makeWall( 14, -Math.PI / 2, -46);
 
-// ── EXHIBIT MARKERS (glowing frames in 3D space) ──
-POSITIONS.forEach((pos, i) => {
-  // Glowing frame
-  const frameGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(3.8, 5.2, 0.05));
-  const frameMat = new THREE.LineBasicMaterial({ color: 0x8b0000, transparent: true, opacity: 0.6 });
-  const frame = new THREE.LineSegments(frameGeo, frameMat);
-  frame.position.copy(pos);
-  scene.add(frame);
+// ── GOLD FRAME BUILDER ──
+function buildGoldFrame(pos) {
+  const group = new THREE.Group();
+  group.position.copy(pos);
 
-  // Spotlight per exhibit
-  const spot = new THREE.PointLight(0x8b0000, 1.5, 18);
-  spot.position.set(pos.x, pos.y + 3, pos.z + 1);
-  scene.add(spot);
+  // Gold material layers — outer to inner, each slightly recessed
+  const goldLayers = [
+    { w: 4.6, h: 6.0, d: 0.22, color: 0xb8860b, roughness: 0.25, metalness: 0.95, z: 0.00 }, // outermost dark gold
+    { w: 4.3, h: 5.7, d: 0.20, color: 0xd4a017, roughness: 0.20, metalness: 0.98, z: 0.06 }, // bright gold bevel
+    { w: 4.1, h: 5.5, d: 0.18, color: 0xc8961a, roughness: 0.30, metalness: 0.92, z: 0.10 }, // mid shadow
+    { w: 3.9, h: 5.3, d: 0.16, color: 0xe8c030, roughness: 0.15, metalness: 1.00, z: 0.13 }, // highlight ring
+    { w: 3.75,h: 5.15,d: 0.14, color: 0xa07010, roughness: 0.40, metalness: 0.85, z: 0.15 }, // inner shadow
+  ];
+
+  goldLayers.forEach(({ w, h, d, color, roughness, metalness, z }) => {
+    const mat = new THREE.MeshStandardMaterial({ color, roughness, metalness, side: THREE.FrontSide });
+
+    // Top bar
+    const topGeo = new THREE.BoxGeometry(w, (h - 4.8) / 2 + 0.05, d);
+    const top = new THREE.Mesh(topGeo, mat);
+    top.position.set(0, h / 2 - (h - 4.8) / 4 - 0.025, z);
+    group.add(top);
+
+    // Bottom bar
+    const bot = top.clone();
+    bot.position.set(0, -(h / 2 - (h - 4.8) / 4 - 0.025), z);
+    group.add(bot);
+
+    // Left bar
+    const sideGeo = new THREE.BoxGeometry((w - 3.6) / 2 + 0.05, 4.8, d);
+    const left = new THREE.Mesh(sideGeo, mat);
+    left.position.set(-(w / 2 - (w - 3.6) / 4 - 0.025), 0, z);
+    group.add(left);
+
+    // Right bar
+    const right = left.clone();
+    right.position.set(w / 2 - (w - 3.6) / 4 - 0.025, 0, z);
+    group.add(right);
+  });
+
+
+
+  // Spotlight from above
+  const spot = new THREE.PointLight(0xffd090, 2.5, 20);
+  spot.position.set(0, 4, 3);
+  group.add(spot);
+
+  // Warm fill from front
+  const fill = new THREE.PointLight(0xc8a040, 1.2, 12);
+  fill.position.set(0, 0, 4);
+  group.add(fill);
 
   // Floor marker
-  const markerGeo = new THREE.CircleGeometry(0.6, 4);
-  const markerMat = new THREE.MeshBasicMaterial({ color: 0x3d0000, transparent: true, opacity: 0.4 });
+  const markerGeo = new THREE.CircleGeometry(0.5, 4);
+  const markerMat = new THREE.MeshBasicMaterial({ color: 0x3d0000, transparent: true, opacity: 0.35 });
   const marker = new THREE.Mesh(markerGeo, markerMat);
   marker.rotation.x = -Math.PI / 2;
-  marker.position.set(pos.x, -3.48, pos.z);
-  scene.add(marker);
-});
+  marker.position.set(0, -3.48 - pos.y, 0);
+  group.add(marker);
+
+  scene.add(group);
+}
+
+POSITIONS.forEach(pos => buildGoldFrame(pos));
 
 // ── PARTICLES (dust/spores) ──
 const particleCount = 300;
@@ -445,34 +441,9 @@ let current = 0;
 let isAnimating = false;
 const CAM_OFFSET = new THREE.Vector3(0, 0.4, 5);
 
-// ── HUD DOTS ──
-const dotsContainer = document.getElementById('hud-dots');
-RELEASES.forEach((_, i) => {
-  const dot = document.createElement('div');
-  dot.className = 'hud-dot' + (i === 0 ? ' active' : '');
-  dotsContainer.appendChild(dot);
-});
-
-function updateDots() {
-  document.querySelectorAll('.hud-dot').forEach((d, i) => {
-    d.classList.toggle('active', i === current);
-  });
-}
-
-// ── IFRAME ──
-const iframeContainer = document.getElementById('iframe-container');
-const activeIframe    = document.getElementById('active-iframe');
-const counterNum      = document.getElementById('counter-num');
-const counterTitle    = document.getElementById('counter-title');
-
-function showRelease(index) {
-  const rel = RELEASES[index];
-  activeIframe.style.height = rel.h + 'px';
-  activeIframe.src = rel.src;
-  counterNum.textContent = String(index + 1).padStart(2, '0') + ' / 12';
-  counterTitle.textContent = rel.title;
-  iframeContainer.classList.add('visible');
-}
+// ── BUTTONS ──
+document.getElementById('btn-prev').addEventListener('click', () => navigate(-1));
+document.getElementById('btn-next').addEventListener('click', () => navigate(1));
 
 // ── CAMERA ANIMATION ──
 function flyTo(index, onDone) {
@@ -519,11 +490,21 @@ function flyTo(index, onDone) {
   requestAnimationFrame(tick);
 }
 
+// ── IFRAME ──
+const iframeContainer = document.getElementById('iframe-container');
+const activeIframe    = document.getElementById('active-iframe');
+
+function showRelease(index) {
+  const rel = RELEASES[index];
+  activeIframe.style.height = rel.h + 'px';
+  activeIframe.src = rel.src;
+  iframeContainer.classList.add('visible');
+}
+
 function navigate(dir) {
   if (isAnimating) return;
   const next = (current + dir + RELEASES.length) % RELEASES.length;
   current = next;
-  updateDots();
   flyTo(current, () => showRelease(current));
 }
 
@@ -550,8 +531,8 @@ function animate() {
   requestAnimationFrame(animate);
   const t = clock.getElapsedTime();
 
-  // Subtle camera sway when idle
-  if (!isAnimating) {
+  // Camera sway only when player is hidden (no wabber/z-fighting)
+  if (!isAnimating && !iframeContainer.classList.contains('visible')) {
     const target = POSITIONS[current];
     const base = target.clone().add(CAM_OFFSET);
     camera.position.x = base.x + Math.sin(t * 0.3) * 0.08;
